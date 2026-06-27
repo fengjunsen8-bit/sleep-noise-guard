@@ -1,4 +1,4 @@
-# -*- mode: python ; coding: utf-8 -*-
+﻿# -*- mode: python ; coding: utf-8 -*-
 
 from pathlib import Path
 
@@ -11,7 +11,7 @@ a = Analysis(
     datas=[
         ("sounds", "sounds"),
         ("README.md", "."),
-        ("docs/中文说明.md", "docs"),
+        ("docs/涓枃璇存槑.md", "docs"),
     ],
     hiddenimports=["numpy", "sounddevice"],
     hookspath=[],
@@ -28,14 +28,14 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="睡眠噪音守卫",
+    name="鐫＄湢鍣煶瀹堝崼",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
