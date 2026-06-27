@@ -2,16 +2,17 @@
 
 from pathlib import Path
 
-ROOT = Path.cwd()
+ROOT = Path(__file__).resolve().parents[2]
+ENTRY_SCRIPT = ROOT / "sleep_noise_guard" / "windows_desktop.py"
 
 a = Analysis(
-    ["sleep_noise_guard/windows_desktop.py"],
+    [str(ENTRY_SCRIPT)],
     pathex=[str(ROOT)],
     binaries=[],
     datas=[
-        ("sounds", "sounds"),
-        ("README.md", "."),
-        ("docs/涓枃璇存槑.md", "docs"),
+        (str(ROOT / "sounds"), "sounds"),
+        (str(ROOT / "README.md"), "."),
+        (str(ROOT / "docs" / "中文说明.md"), "docs"),
     ],
     hiddenimports=["numpy", "sounddevice"],
     hookspath=[],
@@ -28,14 +29,14 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="鐫＄湢鍣煶瀹堝崼",
+    name="睡眠噪音守卫",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
