@@ -1,0 +1,63 @@
+name: Build Release Artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  macos-dmg:
+    name: macOS DMG
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build DMG
+        run: |
+          chmod +x scripts/build_macos_app.sh scripts/build_macos_dmg.sh
+          scripts/build_macos_dmg.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sleep-noise-guard-macos-dmg
+          path: outputs/睡眠噪音守卫.dmg
+
+  windows-exe:
+    name: Windows EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-build.txt
+      - name: Build EXE
+        run: pyinstaller packaging/windows/sleep-noise-guard-windows.spec --noconfirm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sleep-noise-guard-windows-exe
+          path: dist/睡眠噪音守卫.exe
+
+  android-apk:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+      - name: Build APK
+        working-directory: android
+        run: gradle assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sleep-noise-guard-android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

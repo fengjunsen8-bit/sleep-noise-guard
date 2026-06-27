@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sleep-noise-guard"
+version = "0.1.0"
+description = "Monitor sustained room noise and play feedback sounds through a speaker."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "numpy>=1.24",
+  "sounddevice>=0.4.6",
+]
+
+[project.scripts]
+sleep-noise-guard = "sleep_noise_guard.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sleep_noise_guard*"]
