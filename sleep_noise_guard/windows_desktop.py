@@ -1,4 +1,5 @@
-import queue
+﻿import queue
+import sys
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -48,6 +49,12 @@ class WindowsDesktopApp(tk.Tk):
         self._configure_style()
         self._build()
         self.after(150, self._drain_updates)
+        self.after(500, self._populate_devices)
+
+    def _meipass(self, rel: str) -> str:
+        if getattr(sys, "frozen", False):
+            return str(Path(sys._MEIPASS) / rel)
+        return rel
 
     def _configure_style(self):
         style = ttk.Style(self)
@@ -128,9 +135,6 @@ class WindowsDesktopApp(tk.Tk):
             ("每次反馈播放次数", self.feedback_repeats),
             ("冷却时间 秒", self.cooldown),
             ("校准偏移", self.calibration),
-            ("输入设备", self.input_device),
-            ("输出设备", self.output_device),
-            ("日志路径", self.log_path),
             ("音效目录", self.sounds_dir),
         ]
         for row, (label, variable) in enumerate(fields, start=1):
@@ -138,12 +142,42 @@ class WindowsDesktopApp(tk.Tk):
             ttk.Entry(settings, textvariable=variable).grid(row=row, column=1, sticky="ew", pady=5)
             if label == "音效目录":
                 ttk.Button(settings, text="浏览", command=self.choose_sounds).grid(row=row, column=2, padx=(8, 0))
-        ttk.Label(
-            settings,
-            text="出现几秒、出现几次、播放次数留空时，监测到噪音就反馈一次。",
-            style="Panel.TLabel",
-            wraplength=300,
-        ).grid(row=len(fields) + 1, column=0, columnspan=3, sticky="ew", pady=(14, 0))
+
+        row = len(fields) + 1
+        ttk.Label(settings, text="输入设备", style="Panel.TLabel").grid(row=row, column=0, sticky="w", pady=5)
+        self.input_combo = ttk.Combobox(settings, textvariable=self.input_device, state="readonly")
+        self.input_combo.grid(row=row, column=1, sticky="ew", pady=5)
+
+        row += 1
+        ttk.Label(settings, text="输出设备", style="Panel.TLabel").grid(row=row, column=0, sticky="w", pady=5)
+        self.output_combo = ttk.Combobox(settings, textvariable=self.output_device, state="readonly")
+        self.output_combo.grid(row=row, column=1, sticky="ew", pady=5)
+
+        ttk.Button(settings, text="刷新设备", command=self._populate_devices).grid(row=row-1, column=2, padx=(8, 0), rowspan=2, sticky="n")
+
+        row += 1
+        ttk.Label(settings, text="日志路径", style="Panel.TLabel").grid(row=row, column=0, sticky="w", pady=5)
+        ttk.Entry(settings, textvariable=self.log_path).grid(row=row, column=1, sticky="ew", pady=5)
+
+    def _populate_devices(self):
+        try:
+            import sounddevice as sd
+        except ImportError:
+            self.input_combo["values"] = ["(sounddevice not installed)"]
+            self.output_combo["values"] = ["(sounddevice not installed)"]
+            return
+        try:
+            devices = sd.query_devices()
+        except Exception:
+            self.input_combo["values"] = ["(cannot query devices)"]
+            self.output_combo["values"] = ["(cannot query devices)"]
+            return
+        inputs = [f"{d['name']} (ID:{i})" for i, d in enumerate(devices) if d["max_input_channels"] > 0]
+        outputs = [f"{d['name']} (ID:{i})" for i, d in enumerate(devices) if d["max_output_channels"] > 0]
+        self.input_combo["values"] = [""] + inputs
+        self.output_combo["values"] = [""] + outputs
+        if inputs:
+            self.input_combo.set(inputs[0])
 
     def _stat(self, parent, title, variable, column):
         frame = ttk.Frame(parent, style="Panel.TFrame", padding=10)
@@ -203,8 +237,13 @@ class WindowsDesktopApp(tk.Tk):
 
     def test_sound(self):
         try:
-            sound = SoundLibrary(Path(self.sounds_dir.get() or "sounds")).next_sound()
-            SoundPlayer(output_device=self.output_device.get().strip() or None).play(sound)
+            sd_dir = Path(self.sounds_dir.get() or "sounds")
+            if getattr(sys, "frozen", False):
+                sd_dir = Path(sys._MEIPASS) / sd_dir
+            sound = SoundLibrary(sd_dir).next_sound()
+            resolved = Path(sys._MEIPASS) / sound if getattr(sys, "frozen", False) else sound
+            self._log(f"测试音效: {sound.name}")
+            SoundPlayer(output_device=self.output_device.get().strip() or None).play(resolved)
             self.last_sound.set(sound.name)
         except Exception as exc:
             messagebox.showerror("播放失败", str(exc))
@@ -244,6 +283,23 @@ class WindowsDesktopApp(tk.Tk):
 
 
 def main():
+    missing = []
+    for pkg in ["sounddevice", "numpy"]:
+        try:
+            __import__(pkg)
+        except ImportError:
+            missing.append(pkg)
+    if missing:
+        import tkinter as tk
+        from tkinter import messagebox
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showerror(
+            "缺少依赖",
+            f"找不到以下 Python 包：\n{', '.join(missing)}\n\n请运行：pip install {', '.join(missing)}",
+        )
+        root.destroy()
+        return
     app = WindowsDesktopApp()
     app.mainloop()
 

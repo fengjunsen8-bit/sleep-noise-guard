@@ -1,4 +1,4 @@
-# -*- mode: python ; coding: utf-8 -*-
+﻿# -*- mode: python ; coding: utf-8 -*-
 
 from pathlib import Path
 
@@ -14,7 +14,17 @@ a = Analysis(
         (str(ROOT / "README.md"), "."),
         (str(ROOT / "docs" / "中文说明.md"), "docs"),
     ],
-    hiddenimports=["numpy", "sounddevice"],
+    hiddenimports=[
+        "numpy",
+        "sounddevice",
+        "sleep_noise_guard",
+        "sleep_noise_guard.audio",
+        "sleep_noise_guard.monitor",
+        "sleep_noise_guard.noise_log",
+        "sleep_noise_guard.player",
+        "sleep_noise_guard.policy",
+        "sleep_noise_guard.sound_library",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

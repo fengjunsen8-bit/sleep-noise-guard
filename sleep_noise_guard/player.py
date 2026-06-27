@@ -1,4 +1,4 @@
-import platform
+﻿import platform
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -54,11 +54,13 @@ class SoundPlayer:
         elif system == "Linux":
             command = ["aplay", str(path)]
         elif system == "Windows":
+            # Use double-quoted path to handle spaces and special chars
+            escaped = str(path).replace('"', '\\"')
             command = [
                 "powershell",
                 "-NoProfile",
                 "-Command",
-                f"(New-Object Media.SoundPlayer '{path}').PlaySync();",
+                f'(New-Object Media.SoundPlayer "{escaped}").PlaySync();',
             ]
         else:
             raise RuntimeError(f"No system audio player configured for {system}")
