@@ -1,5 +1,3 @@
-import os
-import runpy
 import unittest
 from pathlib import Path
 
@@ -31,19 +29,13 @@ class WindowsPackagingSpecTests(unittest.TestCase):
             captured["exe"] = (args, kwargs)
             return object()
 
-        original_cwd = Path.cwd()
-        try:
-            os.chdir(spec.parent)
-            runpy.run_path(
-                str(spec),
-                init_globals={
-                    "Analysis": analysis,
-                    "PYZ": pyz,
-                    "EXE": exe,
-                },
-            )
-        finally:
-            os.chdir(original_cwd)
+        namespace = {
+            "Analysis": analysis,
+            "PYZ": pyz,
+            "EXE": exe,
+            "SPECPATH": str(spec.parent),
+        }
+        exec(compile(spec.read_text(encoding="utf-8"), str(spec), "exec"), namespace)
 
         analysis_obj = captured["analysis"]
         self.assertEqual(
